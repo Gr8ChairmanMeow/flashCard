@@ -1,5 +1,6 @@
 var inputName;
 var year;
+var score = 0;
 var BasicCard = require("./BasicCard");
 var ClozeCard = require("./ClozeCard");
 
@@ -20,16 +21,14 @@ var twitterParams = {
 var gamesArr = [BasicCard,ClozeCard];
 var basicArr = [["Who was the first president of the United States?", "George Washington"],
 	["How many letters are in the alphabet?", "26"],
-	["Test3", "3"],
-	["Test4", "4"],
-	["Test5", "5"]];
+	["How cool is Clark?", "Very"],
+	["What comes after 7,9,11?", "13"],
+	["There are how many states in the USA?", "50"]];
 var clozeArr = [["George Washington was the first president of the United States.", "George Washington"],
 	["There are 26 letters in the alphabet", "26"],
-	["Test3", "3"],
-	["Test4", "4"],
-	["Test5", "5"]]
-var card1 = new BasicCard("Who was the first president of the United States?", "George Washington");
-var card2 = new ClozeCard("George Washington was the first president of the United States.", "George Washington");
+	["Clark is very cool.", "very"],
+	["Complete this series: 7,9,11,13", "13"],
+	["There are 50 states in the USA.", "50"]];
 
 function titleCase(string){
 
@@ -68,15 +67,16 @@ function myTweets(){
 					masterArr.push(outputArr[j]);
 				}//end of inner for loop
 			}//end of outer for loop
-		var stream = fs.createWriteStream("log.txt",
-			{ flags: 'a',
-			encoding: null,
-			mode: 0666});
-		stream.on('error', console.error);
-		masterArr.forEach((str) => { 
-			stream.write(str + '\n'); 
-		});//end forEach loop
-		stream.end();
+			writeStream(masterArr);
+			/*var stream = fs.createWriteStream("log.txt",
+				{ flags: 'a',
+				encoding: null,
+				mode: 0666});
+			stream.on('error', console.error);
+			masterArr.forEach((str) => { 
+				stream.write(str + '\n'); 
+			});//end forEach loop
+			stream.end();*/
 		}//end if statement
 		else{
 			console.log(error);
@@ -155,8 +155,8 @@ function spotifyThis(inputName){
 		}
 
 	}
-
-	var stream = fs.createWriteStream("log.txt",
+	writeStream(masterArr);
+	/*var stream = fs.createWriteStream("log.txt",
 		{
 			flags: 'a',
 			encoding: null,
@@ -166,7 +166,7 @@ function spotifyThis(inputName){
 		masterArr.forEach((str) => { 
 			stream.write(str + '\n'); 
 		});//end forEach
-	stream.end();
+	stream.end();*/
 	continueLiri();
 	});//end search
 }//end spotifyThis();
@@ -203,8 +203,8 @@ function movieThis(inputName,year){
 			for(i=0;i<outputArr.length;i++){
 				console.log(outputArr[i]);
 			}
-
-			var stream = fs.createWriteStream("log.txt",
+			writeStream(outputArr);
+			/*var stream = fs.createWriteStream("log.txt",
 				{
 					flags: 'a',
 					encoding: null,
@@ -214,11 +214,180 @@ function movieThis(inputName,year){
 				outputArr.forEach((str) => { 
 					stream.write(str + '\n'); 
 				});
-			stream.end();
+			stream.end();*/
 		}//end of if
 		continueLiri();
 	});//end of request
 };//end movieThis();
+
+//writeStream function
+function writeStream(array){
+	var stream = fs.createWriteStream("log.txt",
+		{ flags: 'a',
+		encoding: null,
+		mode: 0666});
+	stream.on('error', console.error);
+	array.forEach((str) => { 
+		stream.write(str + '\n'); 
+	});//end forEach loop
+	stream.end();
+};//end writeStream();
+
+//begin writeFile function
+function writeFile(text){
+	fs.writeFile('log.txt',text, function (err) {
+	  if (err) throw err;
+	});
+};//end writeFile()
+
+//begin appendFile
+function appendFile(text){
+	fs.appendFile('log.txt', text + '\n', function (err) {
+	  if (err) throw err;
+	});
+};//end appendFile()
+
+//basicGame function
+function basicGame(array,i){
+	var limit = array.length;
+
+	if(i===0){
+		console.log("--------------------");
+		console.log("Welcome! Let's play.")
+		console.log("--------------------");
+
+		writeStream(
+			["--------------------",
+			"Welcome! Let's play.",
+			"--------------------"]);
+	}
+
+	function keepPlaying(){
+		if(i<limit){//begin if statement
+			inquirer.prompt([{
+				type: "input",
+				message: i+1 + ". " + array[i].front,
+				name: "answer"
+			},{
+				type:"list",
+				message:"Are you sure?",
+				choices: ["Yes","No"],
+				name:"yesNo"
+			}]).then(function(response){
+				if(response.yesNo === "Yes"){
+					if(response.answer.toLowerCase() === array[i].back.toLowerCase()){
+						console.log("Correct!");
+						console.log("--------------------");
+						writeStream([(i+1) + ". Correct!","--------------------"]);
+						score++;
+					}else{
+						console.log("You are wrong!");
+						console.log("The correct answer is: " + array[i].back);
+						console.log("--------------------");
+						writeStream([(i+1) + ". You are wrong!","The correct answer is: " + array[i].back,"--------------------"]);
+					}
+					i++;
+					basicGame(array,i);
+				}
+				else{
+					keepPlaying();
+				}//end else
+			});
+		}else{
+			console.log("Game Over!");
+			console.log("You got " + score + "/" + limit + " correct!");
+			console.log("--------------------");
+			writeStream(["Game Over!","You got " + score + "/" + limit + " correct!","--------------------"]);
+			inquirer.prompt([{
+				type:"list",
+				message:"Would you like to play again?",
+				choices: ["Yes","No"],
+				name:"yesNo"
+			}]).then(function(response){
+				score=0;
+				if(response.yesNo === "Yes"){
+					basicGame(array,0);
+				}else{
+					console.log("Till next time!");
+					appendFile("Till next time!");
+					continueLiri();
+				}//end else
+			});//end inquirer
+		}//end else
+	};//end keepPlaying
+	setTimeout(keepPlaying,1000);
+}//end basicGame();
+
+//clozeGame
+function clozeGame(array,i){
+	var limit = array.length;
+
+	if(i===0){
+		console.log("--------------------");
+		console.log("Welcome! Let's play.");
+		console.log("--------------------");
+
+		writeStream(
+			["--------------------",
+			"Welcome! Let's play.",
+			"--------------------"]);
+	}
+
+	function keepPlaying(){
+		if(i<limit){//begin if statement
+			inquirer.prompt([{
+				type: "input",
+				message: i+1 + ". " + array[i].partial(),
+				name: "answer"
+			},{
+				type:"list",
+				message:"Are you sure?",
+				choices: ["Yes","No"],
+				name:"yesNo"
+			}]).then(function(response){
+				if(response.yesNo === "Yes"){
+					if(response.answer.toLowerCase() === array[i].cloze.toLowerCase()){
+						console.log("Correct!");
+						console.log("--------------------");
+						writeStream([(i+1) + ". Correct!","--------------------"]);
+						score++;
+					}else{
+						console.log("You are wrong!");
+						console.log("The correct answer is: " + array[i].cloze);
+						console.log("--------------------");
+						writeStream([(i+1) + ". You are wrong!","The correct answer is: " + array[i].cloze,"--------------------"]);
+					}
+					i++;
+					clozeGame(array,i);
+				}
+				else{
+					keepPlaying();
+				}//end else
+			});
+		}else{
+			console.log("Game Over!");
+			console.log("You got " + score + "/" + limit + " correct!");
+			console.log("--------------------");
+			writeStream(["Game Over!","You got " + score + "/" + limit + " correct!","--------------------"]);
+			inquirer.prompt([{
+				type:"list",
+				message:"Would you like to play again?",
+				choices: ["Yes","No"],
+				name:"yesNo"
+			}]).then(function(response){
+				score=0;
+				if(response.yesNo === "Yes"){
+					clozeGame(array,0);
+				}else{
+					console.log("Till next time!");
+					appendFile("Till next time!");
+					continueLiri();
+				}//end else
+			});//end inquirer
+		}//end else
+	};//end keepPlaying
+	setTimeout(keepPlaying,1000);
+}//end clozeGame();
 
 //gameTime function
 function gameTime(){
@@ -229,7 +398,7 @@ function gameTime(){
 			choices: gamesArr,
 			name:"thisGame"
 		}]).then(function(response){
-
+			appendFile(response.thisGame);
 			switch(response.thisGame){
 				case "BasicCard":
 					/*console.log("--------------------");
@@ -242,47 +411,34 @@ function gameTime(){
 						var current = basicArr[i]
 						var card = new BasicCard(current[0],current[1]);
 						cardsArr.push(card);
-						console.log(card);
+						//console.log(card);
 					}
-					console.log(cardsArr);
+
+					basicGame(cardsArr,0);
+
+					//console.log(cardsArr);
 					break;
-				case "ClozeCard":
-					var cardsArr = [];
-					for (var i = 0; i < clozeArr.length; i++) {
-						var current = clozeArr[i]
-						var card = new ClozeCard(current[0],current[1]);
-						cardsArr.push(card);
-						console.log(card);
-					}
-					console.log(cardsArr);
+				case "ClozeCard":				
 					/*console.log("--------------------");
 					console.log("--------card2-------");
 					console.log("--------------------");
 					console.log(card2.fullText);
 					console.log(card2.partial());
 					console.log(card2.cloze);*/
-			}
+					var cardsArr = [];
+					for (var i = 0; i < clozeArr.length; i++) {
+						var current = clozeArr[i]
+						var card = new ClozeCard(current[0],current[1]);
+						cardsArr.push(card);
+						//console.log(card);
+					}
+					//console.log(cardsArr);
 
-			/*console.log(response);
-			console.log("--------------------");
-			console.log("--------card1-------");
-			console.log("--------------------");
-			console.log(card1.front);
-			console.log(card1.back);
-			console.log("--------------------");
-			console.log("--------card2-------");
-			console.log("--------------------");
-			console.log(card2.fullText);
-			console.log(card2.partial());
-			console.log(card2.cloze);
-			console.log("--------------------");
-			console.log("--------TEST!-------");
-			console.log("--------------------");
-			for(g=0;g<10;g++){
-
-				console.log(g);
-			};//end for loop*/
-			continueLiri();
+					clozeGame(cardsArr,0);
+					
+					break;
+			}//end switch
+			//continueLiri();
 		});//end then
 };//end gameTime();
 
@@ -348,9 +504,7 @@ function continueLiri(callback){
 				}
 				else{
 					setTimeout(goodbye,1000);
-					fs.writeFile('log.txt',"", function (err) {
-					  if (err) throw err;
-					});
+					writeFile("");
 				}
 			});//end inner inquirer prompt call
 		};
@@ -367,9 +521,7 @@ function startPrompt(callback){
 	      name: "choice"
 	    }
 	]).then(function(response){
-		fs.appendFile('log.txt', response.choice + '\n', function (err) {
-		  if (err) throw err;
-		});
+		appendFile(response.choice);
 		switchify(response.choice);
 	});//end prompt call
 };//end startPrompt function
