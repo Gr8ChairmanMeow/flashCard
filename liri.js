@@ -416,7 +416,7 @@ function gameTime(){
 
 					basicGame(cardsArr,0);
 
-					//console.log(cardsArr);
+					//console.log(cardsArr);s
 					break;
 				case "ClozeCard":				
 					/*console.log("--------------------");
